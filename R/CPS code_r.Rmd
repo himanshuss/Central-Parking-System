@@ -1,0 +1,471 @@
+---
+title: "Central Parking System"
+output:
+  html_document:
+    df_print: paged
+  html_notebook: default
+  pdf_document: default
+editor_options:
+  chunk_output_type: inline
+---
+
+## Libraries...
+
+```{r}
+library(readxl)
+library(skimr)
+```
+
+## Set path :-
+
+```{r}
+setwd("/Users/himanshusahrawat/MBA projects/CPS/R/")
+```
+
+## Read the excel data at sheet zero...
+
+```{r}
+data=read_excel("Central parking dataset.xls", sheet = 1)
+data_s=read_excel("Central parking dataset.xls", sheet = 2)
+```
+
+## Removing unwanted coloumns...
+
+```{r}
+names(data)
+print("--------------------------------------------------------------------------------")
+names(data_s)
+```
+
+```{r}
+data=data[ , c("Vehicle","Equipment","DateIn","Time In","DateOut","Time Out","Amount","TimeDiff","Ticket_Type","Weekday" )]
+```
+
+```{r}
+data_s=data_s[ , c("Vehicle","Equipment","DateIn","...4","DateOut","...6","Amount","TimeDiff","Ticket_Type","Weekday" )]
+```
+
+## Renaming Columns for weekend data...
+
+```{r}
+colnames(data_s)[4] <- "Time In"
+colnames(data_s)[6] <- "Time Out"
+```
+
+## Summary for weekday data...
+
+```{r echo=TRUE, paged.print=TRUE}
+skim(data)
+```
+
+## observations from weekday data :-
+
+── Data Summary ──────────────────────── Values Name data\
+Number of rows 5000\
+Number of columns 10\
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\
+Column type frequency:\
+character 2\
+numeric 4\
+POSIXct 4\
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\
+Group variables None
+
+── Variable type: character ────────────────────────────────────────── skim_variable n_missing complete_rate min max empty n_unique 1 Ticket_Type 0 1 6 6 0 2 2 Weekday 0 1 6 9 0 5 whitespace 1 0 2 0
+
+── Variable type: numeric ──────────────────────────────────────────── skim_variable n_missing complete_rate mean sd p0 p25 p50 p75 1 Vehicle 0 1 1 0 1 1 1 1 2 Equipment 0 1 5.63 0.913 5 5 5 6 3 Amount 0 1 36.8 28.5 30 30 30 40 4 TimeDiff 0 1 136. 83.9 2 76 122 179 p100 hist 1 1 ▁▁▇▁▁ 2 8 ▇▅▁▁▂ 3 300 ▇▁▁▁▁ 4 722 ▇▅▁▁▁
+
+── Variable type: POSIXct ──────────────────────────────────────────── skim_variable n_missing complete_rate min\
+1 DateIn 0 1 2009-07-06 00:00:00 2 Time In 0 1 1899-12-31 00:01:00 3 DateOut 0 1 2009-07-06 00:00:00 4 Time Out 0 1 1899-12-31 00:00:00 max median n_unique 1 2012-04-20 00:00:00 2010-12-28 00:00:00 696 2 1899-12-31 23:58:00 1899-12-31 16:24:00 880 3 2012-04-20 00:00:00 2010-12-28 00:00:00 760 4 1899-12-31 23:59:00 1899-12-31 18:11:00 952
+
+## Summary for weekend data...
+
+```{r}
+skim(data_s)
+```
+
+## observation from weekend data ....
+
+── Data Summary ──────────────────────── Values Name data_s Number of rows 4995\
+Number of columns 10\
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\
+Column type frequency:\
+character 2\
+numeric 4\
+POSIXct 4\
+\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\
+Group variables None
+
+── Variable type: character ────────────────────────────────────────── skim_variable n_missing complete_rate min max empty n_unique 1 Ticket_Type 0 1 4 6 0 3 2 Weekday 0 1 6 8 0 2 whitespace 1 0 2 0
+
+── Variable type: numeric ──────────────────────────────────────────── skim_variable n_missing complete_rate mean sd p0 p25 p50 p75 1 Vehicle 0 1 1 0 1 1 1 1 2 Equipment 0 1 5.95 1.13 5 5 6 6 3 Amount 0 1 62.5 31.4 0 50 50 70 4 TimeDiff 0 1 154. 87.7 1 91 141 200 p100 hist 1 1 ▁▁▇▁▁ 2 9 ▇▆▁▃▁ 3 300 ▇▃▁▁▁ 4 713 ▇▆▁▁▁
+
+── Variable type: POSIXct ──────────────────────────────────────────── skim_variable n_missing complete_rate min\
+1 DateIn 0 1 2009-07-04 00:00:00 2 Time In 0 1 1899-12-31 00:01:00 3 DateOut 0 1 2009-07-04 00:00:00 4 Time Out 0 1 1899-12-31 00:00:00 max median n_unique 1 2012-03-31 00:00:00 2010-10-30 00:00:00 279 2 1899-12-31 23:58:00 1899-12-31 16:39:00 852 3 2012-04-01 00:00:00 2010-10-30 00:00:00 364 4 1899-12-31 23:59:00 1899-12-31 18:35:00 893
+
+## plots for length of stay
+
+## weekdays
+
+```{r echo=TRUE}
+plot(x = data$TimeDiff, y = data$Amount,
+    xlab = "Length of Stay",
+    ylab = "Amount",
+    main = "Weekday"
+)
+```
+
+```{r echo=TRUE}
+plot(x = data_s$TimeDiff, y = data_s$Amount,
+    xlab = "Length of Stay",
+    ylab = "Amount",
+    main = "Weekend"
+)
+```
+
+```{r}
+library(tidyverse)
+#remove the zero and 300 amount
+data = data %>% filter(Amount <300)
+```
+
+```{r}
+plot(x = data$TimeDiff, y = data$Amount,
+    xlab = "Length of Stay",
+    ylab = "Amount",
+    main = "Weekday"
+)
+```
+
+```{r}
+data_s = data_s %>% filter(Amount <300) %>% filter(Amount>0)
+
+plot(x = data_s$TimeDiff, y = data_s$Amount,
+    xlab = "Length of Stay",
+    ylab = "Amount",
+    main = "Weekend"
+)
+
+```
+
+```{r}
+library(plotly)
+```
+
+Plot for count on daily basis.
+
+```{r}
+library(ggplot2)
+```
+
+```{r}
+ggplot(data, aes(x = Weekday)) +
+  geom_bar()
+```
+
+```{r}
+ggplot(data_s, aes(x = Weekday)) +
+  geom_bar()
+```
+
+Lets check the size of vehicles for both weekdays and weekends....
+
+```{r}
+data %>% filter(Amount>30 & TimeDiff<181)
+```
+
+```{r}
+data_s %>% filter(Amount>60 & TimeDiff<181)
+```
+
+Adding colloumn for timing, if morning (00:00:00 - 12:00:00), afternoon (12:00:00 - 18:00:00), evening (18:00:00 - 00:00:00)
+
+```{r}
+# library(data.table)
+ library(readxl)
+# install.packages("skimr")
+ library("skimr")
+# install.packages("tidyverse")
+ library("tidyverse")
+# install.packages("plotly")
+ library("plotly")
+# install.packages("lubridate")
+ library("lubridate")
+# install.packages("recommenderlab")
+ library("recommenderlab")
+```
+
+```{r}
+class(data$`Time In`)
+```
+
+```{r}
+#hour(data$`Time In`)
+```
+
+```{r}
+# Multiple conditions when adding new column to dataframe:
+data=data %>% mutate(Timing =
+                     case_when((hour(`Time In`) >=00) & (hour(`Time In`)) <12 ~ "Morning", 
+                               (hour(`Time In`) >=12) & (hour(`Time In`)) <18 ~ "Afternoon",
+                               (hour(`Time In`) >=18) & (hour(`Time In`)) <24 ~ "Evening"))
+```
+
+```{r}
+data_s=data_s %>% mutate(Timing =
+                     case_when((hour(`Time In`) >=00) & (hour(`Time In`)) <12 ~ "Morning", 
+                               (hour(`Time In`) >=12) & (hour(`Time In`)) <18 ~ "Afternoon",
+                               (hour(`Time In`) >=18) & (hour(`Time In`)) <24 ~ "Evening"))
+```
+
+```{r}
+tw = data %>% 
+  group_by(Timing) %>%
+  summarise(count =n())
+  
+```
+
+```{r}
+tw
+```
+
+```{r}
+
+fig <- plot_ly(tw, labels = ~Timing, values = ~count, type = 'pie')
+
+fig <- fig %>% layout(title = 'Weekday Timing',
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+fig
+```
+
+people are coming in afternoon
+
+```{r}
+tw = data_s %>% 
+  group_by(Timing) %>%
+  summarise(count =n())
+
+
+fig <- plot_ly(tw, labels = ~Timing, values = ~count, type = 'pie')
+
+fig <- fig %>% layout(title = 'Weekend Timing',
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+fig
+```
+
+During Saturday Sunday , most of the person are coming in afternoon.
+
+Distribution of time spent by vehicles -----
+
+```{r}
+
+library(ggplot2)
+
+```
+
+```{r}
+## Basic histogram from the vector "rating". Each bin is .5 wide.
+## These both result in the same output:
+ggplot(data, aes(x=TimeDiff)) + geom_histogram(binwidth=10)
+# qplot(dat$rating, binwidth=.5)
+
+# Draw with black outline, white fill
+ggplot(data, aes(x=TimeDiff)) +
+    geom_histogram(binwidth=10, colour="black", fill="white")
+
+# Density curve
+ggplot(data, aes(x=TimeDiff)) + geom_density()
+
+# Histogram overlaid with kernel density curve
+ggplot(data, aes(x=TimeDiff)) + 
+    geom_histogram(aes(y=..density..),      # Histogram with density instead of count on y-axis
+                   binwidth=10,
+                   colour="black", fill="white") +
+    geom_density(alpha=.2, fill="#FF6666")  # Overlay with transparent density plot
+```
+
+Checking Skew Value
+
+```{r}
+install.packages("moments")
+library(moments)
+```
+
+```{r}
+skewness(data$TimeDiff)
+```
+
+.If the skewness is between -0.5 and 0.5, the data are fairly symmetrical . If the skewness is between -1 and --- 0.5 or between 0.5 and 1, the data are moderately skewed . If the skewness is less than -1 or greater than 1, the data are highly skewed
+
+DISTRIBUTION FOR WEEKEND
+
+```{r}
+## Basic histogram from the vector "rating". Each bin is .5 wide.
+## These both result in the same output:
+ggplot(data_s, aes(x=TimeDiff)) + geom_histogram(binwidth=10)
+# qplot(dat$rating, binwidth=.5)
+
+# Draw with black outline, white fill
+ggplot(data_s, aes(x=TimeDiff)) +
+    geom_histogram(binwidth=10, colour="black", fill="white")
+
+# Density curve
+ggplot(data_s, aes(x=TimeDiff)) + geom_density()
+
+# Histogram overlaid with kernel density curve
+ggplot(data_s, aes(x=TimeDiff)) + 
+    geom_histogram(aes(y=..density..),      # Histogram with density instead of count on y-axis
+                   binwidth=10,
+                   colour="black", fill="white") +
+    geom_density(alpha=.2, fill="#FF6666")  # Overlay with transparent density plot
+```
+
+```{r}
+skewness(data_s$TimeDiff)
+```
+
+Q.4
+
+People tends to stay longer during weekends.
+
+```{r}
+print("Average stay During weekday")
+print(mean(data$TimeDiff))
+```
+
+```{r}
+print("Average stay During weekend")
+print(mean(data_s$TimeDiff))
+```
+
+Yes people tends to stay longer during weekends.
+
+Q.5
+```{r}
+data=data %>% mutate(Timing =
+                     case_when((hour(`Time In`) >=00) & (hour(`Time In`)) <14 ~ "Morning", 
+                               (hour(`Time In`) >=14) & (hour(`Time In`)) <18 ~ "Afternoon",
+                               (hour(`Time In`) >=18) & (hour(`Time In`)) <24 ~ "Evening"))
+```
+
+
+```{r}
+tw = data %>% 
+  group_by(Timing) %>%
+  summarise(count =n())
+
+
+fig <- plot_ly(tw, labels = ~Timing, values = ~count, type = 'pie')
+
+fig <- fig %>% layout(title = 'Weekdays Timing',
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+fig
+```
+
+
+```{r}
+
+data_s=data_s %>% mutate(Timing =
+                     case_when((hour(`Time In`) >=00) & (hour(`Time In`)) <14 ~ "Morning", 
+                               (hour(`Time In`) >=14) & (hour(`Time In`)) <18 ~ "Afternoon",
+                               (hour(`Time In`) >=18) & (hour(`Time In`)) <24 ~ "Evening"))
+```
+
+```{r}
+tw = data_s %>% 
+  group_by(Timing) %>%
+  summarise(count =n())
+
+
+fig <- plot_ly(tw, labels = ~Timing, values = ~count, type = 'pie')
+
+fig <- fig %>% layout(title = 'Weekend Timing',
+         xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
+         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE))
+fig
+```
+
+Q6.. If charges for first 2 hr is 20 and 10 for every additional hour... financial effect.
+
+```{r}
+new_price <- function(a) {
+  b=as.integer(a[8])-120
+  amount=20
+  while (b>0) {
+    amount=amount+10
+    b=b-60
+  }
+  return(amount)
+  }
+```
+
+```{r}
+data$newprice = apply(data,1,new_price)
+```
+
+```{r}
+sum(data$Amount)-sum(data$newprice)
+```
+
+loss of 24440
+
+
+--------------------------------------------------------------------------------------------------------
+q.8 analyst claim- aternate hypo- average ocupancy is not utmost 2 hr for weekdays. alpha - 0.05 . pop var=sam var
+
+
+```{r}
+data_sample=sample_n(data, 500)
+```
+
+
+```{r}
+
+## Basic histogram from the vector "rating". Each bin is .5 wide.
+## These both result in the same output:
+ggplot(data_sample, aes(x=TimeDiff)) + geom_histogram(binwidth=.01)
+# qplot(dat$rating, binwidth=.5)
+
+# Draw with black outline, white fill
+ggplot(data_sample, aes(x=TimeDiff)) +
+    geom_histogram(binwidth=.01, colour="black", fill="white")
+
+# Density curve
+ggplot(data_sample, aes(x=TimeDiff)) + geom_density()
+
+# Histogram overlaid with kernel density curve
+ggplot(data_sample, aes(x=TimeDiff)) + 
+    geom_histogram(aes(y=..density..),      # Histogram with density instead of count on y-axis
+                   binwidth=.01,
+                   colour="black", fill="white") +
+    geom_density(alpha=.2, fill="#FF6666")
+```
+
+```{r}
+install.packages("BSDA")
+```
+
+```{r}
+library(BSDA)
+```
+
+h null : mean <=120  (claimed value)
+h alter : mean >120 (opposite)
+
+The alternative hypothesis in each case indicates the direction of divergence of the population mean for x (or difference of means for x and y) from mu (i.e., "greater", "less", "two.sided").
+
+```{r}
+data_sample=sample_n(data, 500)
+z.test(x=data_sample$TimeDiff, mu=120, sigma.x=var(data$TimeDiff),alternative = "greater")
+```
+
+The test statistic for the one sample z-test is 0.054417 and the corresponding p-value is 0.4783.
+
+Since this p-value is not less than .05, we have have sufficient evidence to reject the null hypothesis.
+
+
+
+Thank you !!!!!
